@@ -20,8 +20,8 @@
 #include "client.h"
 #include "FileReader.h"
 #include "MemoryBuffer.h"
+#include "platform/util/StdString.h"
 #include "DeMultiplexer.h"
-#include "utils/StdString.h"
 #include "Cards.h"
 
 #ifdef LIVE555
