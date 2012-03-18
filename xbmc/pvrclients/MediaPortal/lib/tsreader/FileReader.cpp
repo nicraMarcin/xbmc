@@ -732,8 +732,8 @@ void FileReader::setBufferPointer()
 
 int64_t FileReader::GetFileSize()
 {
-  int64_t pStartPosition =0;
-  int64_t pLength=0;
+  int64_t pStartPosition = 0;
+  int64_t pLength = 0;
   GetFileSize(&pStartPosition, &pLength);
   //XBMC->Log(LOG_DEBUG, "%s: returns %d, GetLength(%d).", __FUNCTION__, pLength, m_hFile.GetLength());
   return pLength;

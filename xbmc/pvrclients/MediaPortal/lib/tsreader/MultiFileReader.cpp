@@ -240,7 +240,7 @@ long MultiFileReader::Read(unsigned char* pbData, unsigned long lDataLength, uns
     unsigned long bytesRead = 0;
 
     int64_t bytesToRead = file->length - seekPosition;
-    if (lDataLength > bytesToRead)
+    if ((int64_t)lDataLength > bytesToRead)
     {
       // XBMC->Log(LOG_DEBUG, "%s: datalength %lu bytesToRead %lli.", __FUNCTION__, lDataLength, bytesToRead);
       hr = m_TSFile.Read(pbData, (unsigned long)bytesToRead, &bytesRead);
@@ -311,13 +311,12 @@ long MultiFileReader::RefreshTSBufferFile()
 
   long result;
   int64_t currentPosition;
-  long filesAdded, filesRemoved;
-  long filesAdded2, filesRemoved2;
-  long Error;
+  int32_t filesAdded, filesRemoved;
+  int32_t filesAdded2, filesRemoved2;
+  long Error = 0;
   long Loop = 10;
 
   wchar_t* pBuffer = NULL;
-
   do
   {
     Error = 0;
@@ -329,8 +328,8 @@ long MultiFileReader::RefreshTSBufferFile()
 
     int64_t fileLength = m_TSBufferFile.GetFileSize();
 
-    // Min file length is Header ( int64_t + long + long ) + filelist ( > 0 ) + Footer ( long + long ) 
-    if (fileLength <= (sizeof(int64_t) + sizeof(long) + sizeof(long) + sizeof(wchar_t) + sizeof(long) + sizeof(long)))
+    // Min file length is Header ( int64_t + int32_t + int32_t ) + filelist ( > 0 ) + Footer ( int32_t + int32_t )
+    if (fileLength <= (int64_t)(sizeof(currentPosition) + sizeof(filesAdded) + sizeof(filesRemoved) + sizeof(wchar_t) + sizeof(filesAdded2) + sizeof(filesRemoved2)))
     {
       if (m_bDebugOutput)
       {
@@ -341,7 +340,7 @@ long MultiFileReader::RefreshTSBufferFile()
 
     m_TSBufferFile.SetFilePointer(0, FILE_BEGIN);
 
-    unsigned long readLength = sizeof(currentPosition) + sizeof(filesAdded) + sizeof(filesRemoved);
+    uint32_t readLength = sizeof(currentPosition) + sizeof(filesAdded) + sizeof(filesRemoved);
     unsigned char* readBuffer = new unsigned char[readLength];
 
     result = m_TSBufferFile.Read(readBuffer, readLength, &bytesRead);
@@ -352,9 +351,8 @@ long MultiFileReader::RefreshTSBufferFile()
     if (Error == 0)
     {
       currentPosition = *((int64_t*)(readBuffer + 0));
-      filesAdded = *((long*)(readBuffer + sizeof(int64_t)));
-      filesRemoved = *((long*)(readBuffer + sizeof(int64_t) + sizeof(long)));
-      // XBMC->Log(LOG_DEBUG, "MultiFileReader::RefreshTSBufferFile() currentPosition %I64d", currentPosition);
+      filesAdded = *((int32_t*)(readBuffer + sizeof(currentPosition)));
+      filesRemoved = *((int32_t*)(readBuffer + sizeof(currentPosition) + sizeof(filesAdded)));
     }
 
     delete[] readBuffer;
@@ -363,23 +361,17 @@ long MultiFileReader::RefreshTSBufferFile()
     if ((m_filesAdded == filesAdded) && (m_filesRemoved == filesRemoved)) 
       break;
 
-    int64_t remainingLength = fileLength - sizeof(int64_t) - sizeof(long) - sizeof(long) - sizeof(long) - sizeof(long) ;
+    int64_t remainingLength = fileLength - sizeof(currentPosition) - sizeof(filesAdded) - sizeof(filesRemoved) - sizeof(filesAdded2) - sizeof(filesRemoved2);
 
     // Above 100kb seems stupid and figure out a problem !!!
     if (remainingLength > 100000)
-      Error = 0x10;;
+      Error |= 0x10;
   
     pBuffer = (wchar_t*) new char[(unsigned int)remainingLength];
 
-    result=m_TSBufferFile.Read((unsigned char*)pBuffer, (ULONG)remainingLength, &bytesRead);
-    if (!SUCCEEDED(result) ||  bytesRead != remainingLength)
-      Error=0x20;
-
-    //unsigned char* pb = (unsigned char*) pBuffer;
-    //for (unsigned long i = 0; i < bytesRead; i++)
-    //{
-    //  XBMC->Log(LOG_DEBUG, "%s: pBuffer byte[%d] == %x.", __FUNCTION__, i, pb[i]);
-    //}
+    result = m_TSBufferFile.Read((unsigned char*) pBuffer, (uint32_t) remainingLength, &bytesRead);
+    if ( !SUCCEEDED(result) || (int64_t) bytesRead != remainingLength)
+      Error |= 0x20;
 
     readLength = sizeof(filesAdded) + sizeof(filesRemoved);
 
@@ -392,8 +384,8 @@ long MultiFileReader::RefreshTSBufferFile()
 
     if (Error == 0)
     {
-      filesAdded2 = *((long*)(readBuffer + 0));
-      filesRemoved2 = *((long*)(readBuffer + sizeof(long)));
+      filesAdded2 = *((int32_t*)(readBuffer + 0));
+      filesRemoved2 = *((int32_t*)(readBuffer + sizeof(filesAdded2)));
     }
 
     delete[] readBuffer;
@@ -415,30 +407,30 @@ long MultiFileReader::RefreshTSBufferFile()
       delete[] pBuffer;
 
     Loop--;
-  } while ( Error && Loop ) ; // If Error is set, try again...until Loop reaches 0.
- 
+  } while ( Error && Loop ); // If Error is set, try again...until Loop reaches 0.
+
   if (Loop < 8)
   {
-    XBMC->Log(LOG_DEBUG, "MultiFileReader has waited %d times for TSbuffer integrity.", 10-Loop) ;
+    XBMC->Log(LOG_DEBUG, "MultiFileReader has waited %d times for TSbuffer integrity.", 10-Loop);
 
     if (Error)
     {
-      XBMC->Log(LOG_ERROR, "MultiFileReader has failed for TSbuffer integrity. Error : %x", Error) ;
+      XBMC->Log(LOG_ERROR, "MultiFileReader has failed for TSbuffer integrity. Error : %x", Error);
       return E_FAIL;
     }
   }
 
-  //randomly park the file pointer to help minimise HDD clogging
-  if(currentPosition&1)
+  // randomly park the file pointer to help minimise HDD clogging
+  if(currentPosition & 1)
     m_TSBufferFile.SetFilePointer(0, FILE_BEGIN);
   else
     m_TSBufferFile.SetFilePointer(0, FILE_END);
 
   if ((m_filesAdded != filesAdded) || (m_filesRemoved != filesRemoved))
   {
-    long filesToRemove = filesRemoved - m_filesRemoved;
-    long filesToAdd = filesAdded - m_filesAdded;
-    long fileID = filesRemoved;
+    int32_t filesToRemove = filesRemoved - m_filesRemoved;
+    int32_t filesToAdd = filesAdded - m_filesAdded;
+    int32_t fileID = filesRemoved;
     int64_t nextStartPosition = 0;
 
     if (m_bDebugOutput)

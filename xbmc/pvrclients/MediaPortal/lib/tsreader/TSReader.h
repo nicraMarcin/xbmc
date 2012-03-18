@@ -19,15 +19,14 @@
 
 #include "client.h"
 #include "FileReader.h"
-#include "MemoryBuffer.h"
 #include "platform/util/StdString.h"
 #include "DeMultiplexer.h"
 #include "Cards.h"
 
 #ifdef LIVE555
 class CRTSPClient;
+class CMemoryBuffer;
 #endif
-
 typedef enum _TsReaderState
 {
   State_Stopped = 0,
@@ -86,6 +85,6 @@ private:
   CCards*         m_cardSettings;     ///< Pointer to the MediaPortal card settings. Will be used to determine the base path of the timeshift buffer
   string          m_basePath;         ///< The base path shared by all timeshift buffers (to be determined from the Card settings)
   TsReaderState   m_State;            ///< The current state of the TsReader
-  long            m_lastPause;        ///< Last time instance at which the playback was paused
+  unsigned long   m_lastPause;        ///< Last time instance at which the playback was paused
   int             m_WaitForSeekToEof;
 };

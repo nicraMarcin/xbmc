@@ -33,8 +33,9 @@
 #include "MultiFileReader.h"
 #include "utils.h"
 #include "MemoryReader.h"
-#include "RTSPClient.h"
 #include "platform/util/timeutils.h"
+#include "RTSPClient.h"
+#include "MemoryBuffer.h"
 
 #ifdef TARGET_WINDOWS
 #pragma warning(disable:4355)
@@ -45,19 +46,19 @@ using namespace ADDON;
 CTsReader::CTsReader():
 m_demultiplexer( *this )
 {
-  m_fileReader      = NULL;
-  m_fileDuration    = NULL;
-  m_bLiveTv         = false;
-  m_bTimeShifting   = false;
-  m_bIsRTSP         = false;
-  m_cardSettings    = NULL;
-  m_State           = State_Stopped;
-  m_lastPause       = 0;
+  m_fileReader       = NULL;
+  m_fileDuration     = NULL;
+  m_bLiveTv          = false;
+  m_bTimeShifting    = false;
+  m_bIsRTSP          = false;
+  m_cardSettings     = NULL;
+  m_State            = State_Stopped;
+  m_lastPause        = 0;
   m_WaitForSeekToEof = 0;
 
 #ifdef LIVE555
-  m_rtspClient      = NULL;
-  m_buffer          = NULL;
+  m_rtspClient       = NULL;
+  m_buffer           = NULL;
 #endif
 }
 
@@ -176,8 +177,6 @@ long CTsReader::Open(const char* pszFileName)
     }
 
     // play
-    //m_buffer->Clear();
-    //m_buffer->Run(true);
     m_rtspClient->Play(0.0,0.0);
     m_fileReader = new CMemoryReader(*m_buffer);
     m_State = State_Running;
