@@ -24,6 +24,7 @@
 #define NOMINMAX                      // don't define min() and max() to prevent a clash with std::min() and std::max
 #include <windows.h>
 #include <process.h>
+#include <wchar.h>
 
 typedef HANDLE wait_event_t;
 typedef CRITICAL_SECTION criticalsection_t;
@@ -42,5 +43,6 @@ typedef DWORD tThreadId;
 
 #define WcsLen wcslen
 #define WcsToMbs wcstombs
+typedef wchar_t Wchar_t; /* sizeof(wchar_t) = 2 bytes on Windows */
 
 #endif //TARGET_WINDOWS

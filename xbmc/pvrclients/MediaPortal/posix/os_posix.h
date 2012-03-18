@@ -21,6 +21,7 @@
 #ifndef PVRCLIENT_MEDIAPORTAL_OS_POSIX_H
 #define PVRCLIENT_MEDIAPORTAL_OS_POSIX_H
 
+#include <stdint.h>
 #include "File.h"
 
 #define _FILE_OFFSET_BITS 64
@@ -100,14 +101,16 @@ inline unsigned long GetTickCount(void)
 
 using namespace XFILE;
 
-inline size_t WcsLen(const wchar_t *str)
+typedef uint16_t Wchar_t; /* sizeof(wchar_t) = 4 bytes on Linux, but the MediaPortal buffer files have 2-byte wchars */
+
+inline size_t WcsLen(const Wchar_t *str)
 {
   const unsigned short *eos = (const unsigned short*)str;
   while( *eos++ ) ;
   return( (size_t)(eos - (const unsigned short*)str) -1);
 };
 
-inline size_t WcsToMbs(char *s, const wchar_t *w, size_t n)
+inline size_t WcsToMbs(char *s, const Wchar_t *w, size_t n)
 {
   size_t i = 0;
   const unsigned short *wc = (const unsigned short*) w;

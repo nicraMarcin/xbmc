@@ -30,8 +30,8 @@
 #include "client.h" //for XBMC->Log
 #include <string>
 #include "utils.h"
-#include <wchar.h>
 #include <algorithm>
+#include "platform/util/timeutils.h"
 
 using namespace ADDON;
 
@@ -79,32 +79,21 @@ long MultiFileReader::OpenFile()
 {
   long hr = m_TSBufferFile.OpenFile();
 
-  //For radio the buffer sometimes needs some time to become available, so wait try it more than once
-#if defined(TARGET_WINDOWS)
-  unsigned long tc = GetTickCount();
-#elif defined(TARGET_LINUX) || defined(TARGET_OSX)
-  struct timeval tstart;
-  gettimeofday(&tstart, NULL);
-#else
-#error FIXME: Add some form of timeout handling for your OS
-#endif
-  while (RefreshTSBufferFile() == S_FALSE)
+  if (RefreshTSBufferFile() == S_FALSE)
   {
-#if defined(TARGET_WINDOWS)
-    if (GetTickCount()-tc > MAX_BUFFER_TIMEOUT)
-#elif defined(TARGET_LINUX) || defined(TARGET_OSX)
-    struct timeval tnow, tdelta;
-    gettimeofday(&tnow, NULL);
-    timersub(&tnow, &tstart, &tdelta);
-    if ((tdelta.tv_sec * 1000) + (tdelta.tv_usec / 1000) > MAX_BUFFER_TIMEOUT)
-#else
-#error FIXME: Add some form of timeout handling for your OS
-#endif
+    // For radio the buffer sometimes needs some time to become available, so wait and try it more than once
+    PLATFORM::CTimeout timeout(MAX_BUFFER_TIMEOUT);
+
+    do
     {
-      XBMC->Log(LOG_ERROR, "MultiFileReader: timedout while waiting for buffer file to become available");
-      XBMC->QueueNotification(QUEUE_ERROR, "Time out while waiting for buffer file");
-      return S_FALSE;
-    }
+      usleep(100000);
+      if (timeout.TimeLeft() == 0)
+      {
+        XBMC->Log(LOG_ERROR, "MultiFileReader: timed out while waiting for buffer file to become available");
+        XBMC->QueueNotification(QUEUE_ERROR, "Time out while waiting for buffer file");
+        return S_FALSE;
+      }
+    } while (RefreshTSBufferFile() == S_FALSE);
   }
 
   m_currentPosition = 0;
@@ -316,7 +305,7 @@ long MultiFileReader::RefreshTSBufferFile()
   long Error = 0;
   long Loop = 10;
 
-  wchar_t* pBuffer = NULL;
+  Wchar_t* pBuffer = NULL;
   do
   {
     Error = 0;
@@ -367,7 +356,7 @@ long MultiFileReader::RefreshTSBufferFile()
     if (remainingLength > 100000)
       Error |= 0x10;
   
-    pBuffer = (wchar_t*) new char[(unsigned int)remainingLength];
+    pBuffer = (Wchar_t*) new char[(unsigned int)remainingLength];
 
     result = m_TSBufferFile.Read((unsigned char*) pBuffer, (uint32_t) remainingLength, &bytesRead);
     if ( !SUCCEEDED(result) || (int64_t) bytesRead != remainingLength)
@@ -487,10 +476,10 @@ long MultiFileReader::RefreshTSBufferFile()
     // Create a list of files in the .tsbuffer file.
     std::vector<std::string> filenames;
 
-    wchar_t* pwCurrFile = pBuffer;    //Get a pointer to the first wchar filename string in pBuffer
+    Wchar_t* pwCurrFile = pBuffer;    //Get a pointer to the first wchar filename string in pBuffer
     long length = WcsLen(pwCurrFile);
 
-    //XBMC->Log(LOG_DEBUG, "%s: WcsLen(%d), sizeof(wchar_t) == %d.", __FUNCTION__, length, sizeof(wchar_t));
+    //XBMC->Log(LOG_DEBUG, "%s: WcsLen(%d), sizeof(Wchar_t) == %d sizeof(wchar_t) == %d.", __FUNCTION__, length, sizeof(Wchar_t), sizeof(wchar_t));
 
     while (length > 0)
     {
@@ -524,15 +513,7 @@ long MultiFileReader::RefreshTSBufferFile()
       }
       
       // Move the wchar buffer pointer to the next wchar string
-#if defined(TARGET_WINDOWS)
       pwCurrFile += (length + 1);
-#elif defined(TARGET_LINUX) || defined(TARGET_OSX)
-      unsigned short *pus = (unsigned short *) pwCurrFile;
-      pus += (length + 1);
-      pwCurrFile = (wchar_t *) pus;
-#else
-#error Implement pointer adjustment for 16-bit wchars for your OS!
-#endif
       length = WcsLen(pwCurrFile);
     }
 
