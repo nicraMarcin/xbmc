@@ -118,7 +118,7 @@ bool cPVRClientForTheRecord::Connect()
   // Check the accessibility status of all the shares used by ForTheRecord tuners
   if (ShareErrorsFound())
   {
-    XBMC->QueueNotification(QUEUE_ERROR, "4TR share errors: see xbmc.log");
+    XBMC->QueueNotification(QUEUE_ERROR, "Share errors: see xbmc.log");
   }
 
   m_bConnected = true;
@@ -392,12 +392,12 @@ PVR_ERROR cPVRClientForTheRecord::GetEpg(PVR_HANDLE handle, const PVR_CHANNEL &c
     else
     {
       XBMC->Log(LOG_ERROR, "GetEPGData failed for channel id:%i", channel.iUniqueId);
-      XBMC->QueueNotification(QUEUE_ERROR, "4TR GUID to XBMC Channel");
     }
   }
   else
   {
     XBMC->Log(LOG_ERROR, "Channel (%i) did not return a channel class.", channel.iUniqueId);
+    XBMC->QueueNotification(QUEUE_ERROR, "GUID to XBMC Channel");
   }
 
   return PVR_ERROR_NO_ERROR;
@@ -638,12 +638,13 @@ PVR_ERROR cPVRClientForTheRecord::GetChannelGroupMembers(PVR_HANDLE handle, cons
   for (int index = 0; index < size; index++)
   {
     std::string channelId = response[index]["ChannelId"].asString();
+    std::string channelName = response[index]["DisplayName"].asString();
     cChannel* pChannel    = FetchChannel(channelId);
     if (pChannel == NULL)
     {
       XBMC->Log(LOG_ERROR, "Unable to translate channel \"%s\" (\"%s\") to XBMC channel number, channel group member skipped.",
-        channelId.c_str());
-      XBMC->QueueNotification(QUEUE_ERROR, "4TR GUID to XBMC Channel");
+        channelId.c_str(), channelName.c_str());
+      XBMC->QueueNotification(QUEUE_ERROR, "GUID to XBMC Channel");
       continue;
     }
 
@@ -861,7 +862,7 @@ PVR_ERROR cPVRClientForTheRecord::GetTimers(PVR_HANDLE handle)
       {
         XBMC->Log(LOG_ERROR, "Unable to translate channel \"%s\" (\"%s\") to XBMC channel number, timer skipped.",
           upcomingrecording.ChannelId().c_str(), upcomingrecording.ChannelDisplayname().c_str());
-        XBMC->QueueNotification(QUEUE_ERROR, "4TR GUID to XBMC Channel");
+        XBMC->QueueNotification(QUEUE_ERROR, "GUID to XBMC Channel");
         continue;
       }
       tag.iClientChannelUid = pChannel->ID();
@@ -930,7 +931,7 @@ PVR_ERROR cPVRClientForTheRecord::AddTimer(const PVR_TIMER &timerinfo)
   {
     XBMC->Log(LOG_ERROR, "Unable to translate XBMC channel %d to ForTheRecord channel GUID, timer not added.",
       timerinfo.iClientChannelUid);
-    XBMC->QueueNotification(QUEUE_ERROR, "4TR XBMC Channel to GUID");
+    XBMC->QueueNotification(QUEUE_ERROR, "XBMC Channel to GUID");
     return PVR_ERROR_NOT_POSSIBLE;
   }
 
@@ -986,7 +987,7 @@ PVR_ERROR cPVRClientForTheRecord::DeleteTimer(const PVR_TIMER &timerinfo, bool f
   {
     XBMC->Log(LOG_ERROR, "Unable to translate XBMC channel %d to ForTheRecord channel GUID, timer not deleted.",
       timerinfo.iClientChannelUid);
-    XBMC->QueueNotification(QUEUE_ERROR, "4TR XBMC Channel to GUID");
+    XBMC->QueueNotification(QUEUE_ERROR, "XBMC Channel to GUID");
     return PVR_ERROR_NOT_POSSIBLE;
   }
 
@@ -1079,7 +1080,7 @@ PVR_ERROR cPVRClientForTheRecord::UpdateTimer(const PVR_TIMER &timerinfo)
 
 /************************************************************/
 /** Live stream handling */
-cChannel* cPVRClientForTheRecord::FetchChannel(int channel_uid, bool ErrorIfNotFound)
+cChannel* cPVRClientForTheRecord::FetchChannel(int channel_uid, bool LogError)
 {
   // Search for this channel in our local channel list to find the original ChannelID back:
   vector<cChannel>::iterator it;
@@ -1092,11 +1093,11 @@ cChannel* cPVRClientForTheRecord::FetchChannel(int channel_uid, bool ErrorIfNotF
     }
   }
 
-  if (ErrorIfNotFound) XBMC->Log(LOG_ERROR, "XBMC channel with id %d not found in the channel cache!.", channel_uid);
+  if (LogError) XBMC->Log(LOG_ERROR, "XBMC channel with id %d not found in the channel cache!.", channel_uid);
   return NULL;
 }
 
-cChannel* cPVRClientForTheRecord::FetchChannel(std::string channelid, bool ErrorIfNotFound)
+cChannel* cPVRClientForTheRecord::FetchChannel(std::string channelid, bool LogError)
 {
   // Search for this channel in our local channel list to find the original ChannelID back:
   vector<cChannel>::iterator it;
@@ -1109,7 +1110,7 @@ cChannel* cPVRClientForTheRecord::FetchChannel(std::string channelid, bool Error
     }
   }
   
-  if (ErrorIfNotFound) XBMC->Log(LOG_ERROR, "ForTheRecord channel with GUID \"%s\" not found in the channel cache!.", channelid.c_str());
+  if (LogError) XBMC->Log(LOG_ERROR, "ForTheRecord channel with GUID \"%s\" not found in the channel cache!.", channelid.c_str());
   return NULL;
 }
 
@@ -1218,7 +1219,7 @@ bool cPVRClientForTheRecord::_OpenLiveStream(const PVR_CHANNEL &channelinfo)
   else
   {
     XBMC->Log(LOG_ERROR, "Could not get ForTheRecord channel guid for channel %i.", channelinfo.iUniqueId);
-    XBMC->QueueNotification(QUEUE_ERROR, "4TR XBMC Channel to GUID");
+    XBMC->QueueNotification(QUEUE_ERROR, "XBMC Channel to GUID");
     return false;
   }
 
