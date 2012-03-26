@@ -402,12 +402,12 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   else if (str == "tvgroup")
   {
-    XBMC->Log(LOG_INFO, "Changed setting 'tvgroup' from %s to %s", g_szTVGroup.c_str(), (const char*) settingValue);
+    XBMC->Log(LOG_INFO, "Changed setting 'tvgroup' from '%s' to '%s'", g_szTVGroup.c_str(), (const char*) settingValue);
     g_szTVGroup = (const char*) settingValue;
   }
   else if (str == "radiogroup")
   {
-    XBMC->Log(LOG_INFO, "Changed setting 'radiogroup' from %s to %s", g_szRadioGroup.c_str(), (const char*) settingValue);
+    XBMC->Log(LOG_INFO, "Changed setting 'radiogroup' from '%s' to '%s'", g_szRadioGroup.c_str(), (const char*) settingValue);
     g_szRadioGroup = (const char*) settingValue;
   }
   else if (str == "resolvertsphostname")
@@ -442,23 +442,33 @@ ADDON_STATUS ADDON_SetSetting(const char *settingName, const void *settingValue)
   }
   else if (str == "timeshiftdir")
   {
-    XBMC->Log(LOG_INFO, "Changed setting 'timeshiftdir' from %u to %u", g_szTimeshiftDir.c_str(), *(bool*) settingValue);
-    g_szTimeshiftDir = *(bool*) settingValue;
+    XBMC->Log(LOG_INFO, "Changed setting 'timeshiftdir' from %s to %s", g_szTimeshiftDir.c_str(), (const char*) settingValue);
+    g_szTimeshiftDir = (const char*) settingValue;
   }
   else if (str == "smbusername")
   {
-    XBMC->Log(LOG_INFO, "Changed setting 'smbusername' from %u to %u", g_szSMBusername.c_str(), *(bool*) settingValue);
-    g_szTimeshiftDir = *(bool*) settingValue;
+    XBMC->Log(LOG_INFO, "Changed setting 'smbusername' from '%s' to '%s'", g_szSMBusername.c_str(), (const char*) settingValue);
+    g_szSMBusername = (const char*) settingValue;
   }
   else if (str == "smbpassword")
   {
-    XBMC->Log(LOG_INFO, "Changed setting 'smbpassword' from %u to %u", g_szSMBpassword.c_str(), *(bool*) settingValue);
-    g_szTimeshiftDir = *(bool*) settingValue;
+    XBMC->Log(LOG_INFO, "Changed setting 'smbpassword' from '%s' to '%s'", g_szSMBpassword.c_str(), (const char*) settingValue);
+   g_szSMBpassword = (const char*) settingValue;
   }
   else if (str == "fastchannelswitch")
   {
     XBMC->Log(LOG_INFO, "Changed setting 'fastchannelswitch' from %u to %u", g_bFastChannelSwitch, *(bool*) settingValue);
     g_bFastChannelSwitch = *(bool*) settingValue;
+  }
+  else if (str == "streamingmethod")
+  {
+    if (g_eStreamingMethod != *(eStreamingMethod*) settingValue)
+    {
+      XBMC->Log(LOG_INFO, "Changed setting 'streamingmethod' from %u to %u", g_eStreamingMethod, *(int*) settingValue);
+      g_eStreamingMethod = *(eStreamingMethod*) settingValue;
+      /* Switching between ffmpeg and tsreader mode requires a restart due to different channel streams */
+      return ADDON_STATUS_NEED_RESTART;
+    }
   }
 
   return ADDON_STATUS_OK;
