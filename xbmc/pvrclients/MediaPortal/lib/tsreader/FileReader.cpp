@@ -294,21 +294,15 @@ long FileReader::GetFileSize(int64_t *pStartPosition, int64_t *pLength)
       }
     }
 
-    unsigned long dwSizeLow;
-    unsigned long dwSizeHigh;
-
-    dwSizeLow = ::GetFileSize(m_hFile, &dwSizeHigh);
-    DWORD dwErr = GetLastError();
-    if ((dwSizeLow == 0xFFFFFFFF) && (dwErr != NO_ERROR ))
+    LARGE_INTEGER li;
+    if (::GetFileSizeEx(m_hFile, &li) == 0)
     {
-      XBMC->Log(LOG_ERROR, "%s: GetFileSize(File) failed. Error %d.", __FUNCTION__, dwErr);
+      DWORD dwErr = GetLastError();
+      XBMC->Log(LOG_ERROR, "%s GetFileSizeEx failed. Error %d.", __FUNCTION__, dwErr);
       return E_FAIL;
     }
-
-    LARGE_INTEGER li;
-    li.LowPart = dwSizeLow;
-    li.HighPart = dwSizeHigh;
     m_fileSize = li.QuadPart;
+
   }
   *pLength = m_fileSize;
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
@@ -499,9 +493,14 @@ unsigned long FileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long
 int64_t FileReader::GetFilePointer()
 {
 #if defined(TARGET_WINDOWS)
-  LARGE_INTEGER li;
-  li.QuadPart = 0;
-  li.LowPart = ::SetFilePointer(m_hFile, 0, &li.HighPart, FILE_CURRENT);
+  LARGE_INTEGER li, seekoffset;
+  seekoffset.QuadPart = 0;
+  if (::SetFilePointerEx(m_hFile, seekoffset, &li, FILE_CURRENT) == 0)
+  {
+    // Error
+    XBMC->Log(LOG_ERROR, "FileReader::GetFilePointer() ::SetFilePointerEx failed");
+    return -1;
+  }
 
   int64_t start;
   int64_t length = 0;
@@ -735,6 +734,7 @@ int64_t FileReader::GetFileSize()
   int64_t pStartPosition = 0;
   int64_t pLength = 0;
   GetFileSize(&pStartPosition, &pLength);
-  //XBMC->Log(LOG_DEBUG, "%s: returns %d, GetLength(%d).", __FUNCTION__, pLength, m_hFile.GetLength());
+  //XBMC->Log(LOG_DEBUG, "%s: returns %lld, GetLength(%lld).", __FUNCTION__, pStartPosition, pLength);
+
   return pLength;
 }
