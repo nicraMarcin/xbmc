@@ -1491,6 +1491,20 @@ void cPVRClientMediaPortal::CloseLiveStream(void)
   }
 }
 
+long long cPVRClientMediaPortal::SeekLiveStream(long long iPosition, int iWhence)
+{
+  return -1;
+}
+
+long long cPVRClientMediaPortal::LengthLiveStream(void)
+{
+  return -1;
+}
+
+long long cPVRClientMediaPortal::PositionLiveStream(void)
+{
+  return -1;
+}
 
 bool cPVRClientMediaPortal::SwitchChannel(const PVR_CHANNEL &channel)
 {
@@ -1726,6 +1740,38 @@ int cPVRClientMediaPortal::ReadRecordedStream(unsigned char *pBuffer, unsigned i
   //read_timeouts = 0;
   m_bPlayingNoSignal = false;
   return read_done;//TSReadDone*TS_SIZE;
+}
+
+long long cPVRClientMediaPortal::SeekRecordedStream(long long iPosition, int iWhence)
+{
+  if (g_eStreamingMethod == ffmpeg || !m_tsreader)
+  {
+    return -1;
+  }
+
+  if (iPosition == 0 && iWhence == SEEK_CUR)
+  {
+    return m_tsreader->GetFilePointer();
+  }
+  return m_tsreader->SetFilePointer(iPosition, iWhence);
+}
+
+long long cPVRClientMediaPortal::PositionRecordedStream(void)
+{
+  if (g_eStreamingMethod == ffmpeg || !m_tsreader)
+  {
+    return -1;
+  }
+  return m_tsreader->GetFilePointer();
+}
+
+long long  cPVRClientMediaPortal::LengthRecordedStream(void)
+{
+  if (g_eStreamingMethod == ffmpeg || !m_tsreader)
+  {
+    return -1;
+  }
+  return m_tsreader->GetFileSize();
 }
 
 /*

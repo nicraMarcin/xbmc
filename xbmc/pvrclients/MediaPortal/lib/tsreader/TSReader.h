@@ -42,6 +42,9 @@ public:
   long Open(const char* pszFileName);
   long Read(unsigned char* pbData, unsigned long lDataLength, unsigned long *dwReadBytes);
   void Close();
+  unsigned long SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod);
+  int64_t GetFileSize();
+  int64_t GetFilePointer();
   bool OnZap(const char* pszFileName, int64_t timeShiftBufferPos, long timeshiftBufferID);
 
   /**
@@ -60,6 +63,10 @@ public:
   long Pause();
 
   TsReaderState State() {return m_State;};
+#ifdef _DEBUG
+  long long sigmaTime();
+  long long sigmaCount();
+#endif //DEBUG
 
 private:
 
@@ -87,4 +94,8 @@ private:
   TsReaderState   m_State;            ///< The current state of the TsReader
   unsigned long   m_lastPause;        ///< Last time instance at which the playback was paused
   int             m_WaitForSeekToEof;
+#ifdef _DEBUG
+  LARGE_INTEGER   liDelta;
+  LARGE_INTEGER   liCount;
+#endif // _DEBUG
 };

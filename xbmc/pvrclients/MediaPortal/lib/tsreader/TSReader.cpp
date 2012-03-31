@@ -60,6 +60,11 @@ m_demultiplexer( *this )
   m_rtspClient       = NULL;
   m_buffer           = NULL;
 #endif
+
+#ifdef _DEBUG
+  liDelta.QuadPart  = 0;
+  liCount.QuadPart  = 0;
+#endif // _DEBUG
 }
 
 CTsReader::~CTsReader(void)
@@ -239,9 +244,36 @@ long CTsReader::Open(const char* pszFileName)
 
 long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long *dwReadBytes)
 {
+#ifdef _DEBUG
+  LARGE_INTEGER liFrequency;
+  LARGE_INTEGER liCurrent;
+  LARGE_INTEGER liLast;
+#endif // _DEBUG
+
   if (m_fileReader)
   {
-    return m_fileReader->Read(pbData, lDataLength, dwReadBytes);
+    long ret;
+#ifdef _DEBUG
+    // Save the performance counter frequency for later use.
+    if (!QueryPerformanceFrequency(&liFrequency))
+      XBMC->Log(LOG_ERROR, "QPF() failed with error %d\n", GetLastError());
+
+    if (!QueryPerformanceCounter(&liCurrent))
+		  XBMC->Log(LOG_ERROR, "QPC() failed with error %d\n", GetLastError());
+    liLast = liCurrent;
+#endif // _DEBUG
+
+    ret = m_fileReader->Read(pbData, lDataLength, dwReadBytes);
+
+#ifdef _DEBUG
+    if (!QueryPerformanceCounter(&liCurrent))
+      XBMC->Log(LOG_ERROR, "QPC() failed with error %d\n", GetLastError());
+
+    // Convert difference in performance counter values to nanoseconds.
+    liDelta.QuadPart += (((liCurrent.QuadPart - liLast.QuadPart) * 1000000) / liFrequency.QuadPart);
+    liCount.QuadPart++;
+#endif // _DEBUG
+	return ret;
   }
 
   dwReadBytes = 0;
@@ -387,3 +419,29 @@ bool CTsReader::IsSeeking()
 {
   return (m_WaitForSeekToEof > 0);
 }
+
+int64_t CTsReader::GetFileSize()
+{
+  return m_fileReader->GetFileSize();
+}
+
+int64_t CTsReader::GetFilePointer()
+{
+  return m_fileReader->GetFilePointer();
+}
+
+unsigned long CTsReader::SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod)
+{
+  return m_fileReader->SetFilePointer(llDistanceToMove, dwMoveMethod);
+}
+
+#ifdef _DEBUG
+long long CTsReader::sigmaTime()
+{
+  return liDelta.QuadPart;
+}
+long long CTsReader::sigmaCount()
+{
+  return liCount.QuadPart;
+}
+#endif // _DEBUG
