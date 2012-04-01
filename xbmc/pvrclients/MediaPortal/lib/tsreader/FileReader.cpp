@@ -36,8 +36,6 @@ using namespace ADDON;
 FileReader::FileReader() :
 #if defined(TARGET_WINDOWS)
   m_hFile(INVALID_HANDLE_VALUE),
-  m_hInfoFile(INVALID_HANDLE_VALUE),
-  m_infoFileSize(0),
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
   m_hFile(),
 #else
@@ -69,19 +67,16 @@ long FileReader::GetFileName(char* *lpszFileName)
 
 long FileReader::SetFileName(const char *pszFileName)
 {
-  // Is this a valid filename supplied
-  //CheckPointer(pszFileName,E_POINTER);
-
   if(strlen(pszFileName) > MAX_PATH)
     return ERROR_FILENAME_EXCED_RANGE;
 
   // Take a copy of the filename
-
   if (m_pFileName)
   {
     delete[] m_pFileName;
     m_pFileName = NULL;
   }
+
   m_pFileName = new char[1 + strlen(pszFileName)];
   if (m_pFileName == NULL)
     return E_OUTOFMEMORY;
@@ -98,8 +93,8 @@ long FileReader::SetFileName(const char *pszFileName)
 //
 long FileReader::OpenFile()
 {
-  //char *pFileName = NULL;
-  int Tmo=25 ; //5 in MediaPortal
+  int Tmo = 25; //5 in MediaPortal
+
   // Is the file already opened
   if (!IsFileInvalid())
   {
@@ -158,9 +153,11 @@ long FileReader::OpenFile()
     m_bReadOnly = TRUE;
     if (!IsFileInvalid()) break;
 
-    Sleep(20) ;
+    Sleep(20);
   }
-  while(--Tmo) ;
+
+  while(--Tmo);
+
   if (Tmo)
   {
     if (Tmo<4) // 1 failed + 1 succeded is quasi-normal, more is a bit suspicious ( disk drive too slow or problem ? )
@@ -182,30 +179,6 @@ long FileReader::OpenFile()
   XBMC->Log(LOG_DEBUG, "FileReader::OpenFile() %s handle %i %s", m_bReadOnly ? "read-only" : "read/write", m_hFile, m_pFileName );
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
   XBMC->Log(LOG_DEBUG, "FileReader::OpenFile() %s handle %p %s", m_bReadOnly ? "read-only" : "read/write", m_hFile.GetImplemenation(), m_pFileName );
-#endif
-
-  char infoName[512];
-  strncpy(infoName, m_pFileName, 512);
-  strncat(infoName, ".info", 512 - strlen(infoName) - 1);
-
-#ifdef TARGET_WINDOWS
-  m_hInfoFile = ::CreateFile(infoName,    // The filename
-      (DWORD) GENERIC_READ,               // File access
-      (DWORD) (FILE_SHARE_READ |
-      FILE_SHARE_WRITE),                  // Share access
-      NULL,                               // Security
-      (DWORD) OPEN_EXISTING,              // Open flags
-//      (DWORD) 0,
-      (DWORD) FILE_ATTRIBUTE_NORMAL,      // More flags
-//      FILE_FLAG_SEQUENTIAL_SCAN,        // More flags
-//      FILE_ATTRIBUTE_NORMAL |
-//      FILE_FLAG_RANDOM_ACCESS,          // More flags
-      NULL);
-
-  //XBMC->Log(LOG_DEBUG, "FileReader::OpenFile() info file handle %i", m_hInfoFile);
-#elif defined TARGET_LINUX
-#else
-#error FIXME: Add an OpenFile() implementation for your OS
 #endif
 
   SetFilePointer(0, FILE_BEGIN);
@@ -232,19 +205,10 @@ long FileReader::CloseFile()
   }
 
   //XBMC->Log(LOG_DEBUG, "FileReader::CloseFile() handle %i %ws", m_hFile, m_pFileName);
-  //XBMC->Log(LOG_DEBUG, "FileReader::CloseFile() info file handle %i", m_hInfoFile);
-
-//  BoostThread Boost;
 
 #if defined(TARGET_WINDOWS)
   ::CloseHandle(m_hFile);
   m_hFile = INVALID_HANDLE_VALUE; // Invalidate the file
-
-  if (m_hInfoFile != INVALID_HANDLE_VALUE)
-  {
-    ::CloseHandle(m_hInfoFile);
-    m_hInfoFile = INVALID_HANDLE_VALUE; // Invalidate the file
-  }
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
   m_hFile.Close();
 #else
@@ -268,32 +232,12 @@ inline bool FileReader::IsFileInvalid()
 
 long FileReader::GetFileSize(int64_t *pStartPosition, int64_t *pLength)
 {
-  //CheckPointer(pStartPosition,E_POINTER);
-  //CheckPointer(pLength,E_POINTER);
-  
   GetStartPosition(pStartPosition);
 
 #if defined(TARGET_WINDOWS)
   //Do not get file size if static file or first time 
-  if (m_bReadOnly || !m_fileSize) {
-    
-    if (m_hInfoFile != INVALID_HANDLE_VALUE)
-    {
-      int64_t length = -1;
-      unsigned long read = 0;
-      LARGE_INTEGER li;
-      li.QuadPart = 0;
-      ::SetFilePointer(m_hInfoFile, li.LowPart, &li.HighPart, FILE_BEGIN);
-      ::ReadFile(m_hInfoFile, (void*)&length, (DWORD)sizeof(int64_t), &read, NULL);
-
-      if(length > -1)
-      {
-        m_fileSize = length;
-        *pLength = length;
-        return S_OK;
-      }
-    }
-
+  if (m_bReadOnly || !m_fileSize)
+  {
     LARGE_INTEGER li;
     if (::GetFileSizeEx(m_hFile, &li) == 0)
     {
@@ -325,61 +269,11 @@ long FileReader::GetFileSize(int64_t *pStartPosition, int64_t *pLength)
   return S_OK;
 }
 
-#ifdef TARGET_WINDOWS
-long FileReader::GetInfoFileSize(int64_t *lpllsize)
-{
-  //Do not get file size if static file or first time 
-  if (m_bReadOnly || !m_infoFileSize)
-  {
-    DWORD dwSizeLow;
-    DWORD dwSizeHigh;
-
-    dwSizeLow = ::GetFileSize(m_hInfoFile, &dwSizeHigh);
-    if ((dwSizeLow == 0xFFFFFFFF) && (GetLastError() != NO_ERROR ))
-    {
-      return E_FAIL;
-    }
-
-    LARGE_INTEGER li;
-    li.LowPart = dwSizeLow;
-    li.HighPart = dwSizeHigh;
-    m_infoFileSize = li.QuadPart;
-  }
-  *lpllsize = m_infoFileSize;
-  return S_OK;
-}
-#endif
-
 long FileReader::GetStartPosition(int64_t *lpllpos)
 {
   // Do not get file size if static file unless first time
   if (m_bReadOnly || !m_fileStartPos)
   {
-#ifdef TARGET_WINDOWS
-    if (m_hInfoFile != INVALID_HANDLE_VALUE)
-    {
-      int64_t size = 0;
-      GetInfoFileSize(&size);
-      //Check if timeshift info file
-      if (size > sizeof(int64_t))
-      {
-        //Get the file start pointer
-        int64_t length = -1;
-        DWORD read = 0;
-        LARGE_INTEGER li;
-        li.QuadPart = sizeof(int64_t);
-        ::SetFilePointer(m_hInfoFile, li.LowPart, &li.HighPart, FILE_BEGIN);
-        ::ReadFile(m_hInfoFile, (void*)&length, (DWORD)sizeof(int64_t), &read, NULL);
-
-        if(length > -1)
-        {
-          m_fileStartPos = length;
-          *lpllpos =  length;
-          return S_OK;
-        }
-      }
-    }
-#endif
     m_fileStartPos = 0;
   }
   *lpllpos = m_fileStartPos;
@@ -393,59 +287,25 @@ unsigned long FileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long
 #if defined(TARGET_WINDOWS)
   LARGE_INTEGER li;
 
-  if (dwMoveMethod == FILE_END && m_hInfoFile != INVALID_HANDLE_VALUE)
+  int64_t startPos = 0;
+  GetStartPosition(&startPos);
+
+  if (startPos > 0)
   {
-    int64_t startPos = 0;
-    GetStartPosition(&startPos);
+    int64_t start;
+    int64_t fileSize = 0;
+    GetFileSize(&start, &fileSize);
 
-    if (startPos > 0)
-    {
-      int64_t start;
-      int64_t fileSize = 0;
-      GetFileSize(&start, &fileSize);
+    int64_t filePos  = (int64_t)((int64_t)startPos + (int64_t)llDistanceToMove);
 
-      int64_t filePos  = (int64_t)((int64_t)fileSize + (int64_t)llDistanceToMove + (int64_t)startPos);
+    if (filePos >= fileSize)
+      li.QuadPart = (int64_t)((int64_t)filePos - (int64_t)fileSize);
+    else
+      li.QuadPart = filePos;
 
-      if (filePos >= fileSize)
-        li.QuadPart = (int64_t)((int64_t)startPos + (int64_t)llDistanceToMove);
-      else
-        li.QuadPart = filePos;
-
-      return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, FILE_BEGIN);
-    }
-
-    int64_t start = 0;
-    int64_t length = 0;
-    GetFileSize(&start, &length);
-
-    length  = (int64_t)((int64_t)length + (int64_t)llDistanceToMove);
-
-    li.QuadPart = length;
-
-    dwMoveMethod = FILE_BEGIN;
+    return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, dwMoveMethod);
   }
-  else
-  {
-    int64_t startPos = 0;
-    GetStartPosition(&startPos);
-
-    if (startPos > 0)
-    {
-      int64_t start;
-      int64_t fileSize = 0;
-      GetFileSize(&start, &fileSize);
-
-      int64_t filePos  = (int64_t)((int64_t)startPos + (int64_t)llDistanceToMove);
-
-      if (filePos >= fileSize)
-        li.QuadPart = (int64_t)((int64_t)filePos - (int64_t)fileSize);
-      else
-        li.QuadPart = filePos;
-
-      return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, dwMoveMethod);
-    }
-    li.QuadPart = llDistanceToMove;
-  }
+  li.QuadPart = llDistanceToMove;
 
   return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, dwMoveMethod);
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
@@ -567,72 +427,8 @@ long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned
     return E_FAIL;
   }
   int64_t m_filecurrent = li.QuadPart;
-#ifdef TARGET_WINDOWS
-  if (m_hInfoFile != INVALID_HANDLE_VALUE)
-  {
-    int64_t startPos = 0;
-    GetStartPosition(&startPos);
 
-    if (startPos > 0)
-    {
-      int64_t start;
-      int64_t length = 0;
-      GetFileSize(&start, &length);
-
-      if (length < (int64_t)(m_filecurrent + (int64_t)lDataLength) && m_filecurrent > startPos)
-      {
-        hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD) std::max( zeropos, (length - m_filecurrent)), dwReadBytes, NULL);
-        if (!hr)
-          return E_FAIL;
-
-        LARGE_INTEGER li;
-        li.QuadPart = 0;
-        hr = ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, FILE_BEGIN);
-        DWORD dwErr = ::GetLastError();
-        if ((DWORD)hr == (DWORD)0xFFFFFFFF && dwErr)
-        {
-          return E_FAIL;
-        }
-
-        unsigned long dwRead = 0;
-
-        hr = ::ReadFile(m_hFile,
-          (void*)(pbData + (DWORD) std::max( zeropos, (length - m_filecurrent))),
-          (DWORD) std::max( zeropos,((int64_t)lDataLength -(int64_t)(length - m_filecurrent))),
-          &dwRead,
-          NULL);
-
-        *dwReadBytes = *dwReadBytes + dwRead;
-
-      }
-      else if (startPos < (int64_t)(m_filecurrent + (int64_t)lDataLength) && m_filecurrent < startPos)
-        hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD) std::max( zeropos,(startPos - m_filecurrent)), dwReadBytes, NULL);
-
-      else
-        hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL);
-
-      if (!hr)
-        return S_FALSE;
-
-      if (*dwReadBytes < (unsigned long)lDataLength)
-      {
-        return E_FAIL;
-      }
-
-      return S_OK;
-    }
-
-    int64_t start = 0;
-    int64_t length = 0;
-    GetFileSize(&start, &length);
-    if (length < (int64_t)(m_filecurrent + (int64_t)lDataLength))
-      hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD) std::max( zeropos,(length - m_filecurrent)), dwReadBytes, NULL);
-    else
-      hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL);
-  }
-  else
-#endif //TARGET_WINDOWS
-    hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL);//Read file data into buffer
+  hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL); // Read file data into buffer
 
   if (!hr)
   {

@@ -69,8 +69,6 @@ class FileReader
   protected:
 #if defined(TARGET_WINDOWS)
     HANDLE   m_hFile;               // Handle to file for streaming
-    HANDLE   m_hInfoFile;           // Handle to Infofile for filesize from FileWriter
-    int64_t  m_infoFileSize;
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
     XFILE::CFile m_hFile;           // Handle to file for streaming
 #endif
