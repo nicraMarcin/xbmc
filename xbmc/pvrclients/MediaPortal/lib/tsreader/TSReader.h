@@ -63,7 +63,7 @@ public:
   long Pause();
 
   TsReaderState State() {return m_State;};
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
   long long sigmaTime();
   long long sigmaCount();
 #endif //DEBUG
@@ -94,7 +94,7 @@ private:
   TsReaderState   m_State;            ///< The current state of the TsReader
   unsigned long   m_lastPause;        ///< Last time instance at which the playback was paused
   int             m_WaitForSeekToEof;
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
   LARGE_INTEGER   liDelta;
   LARGE_INTEGER   liCount;
 #endif // _DEBUG

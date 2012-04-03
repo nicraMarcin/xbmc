@@ -61,7 +61,7 @@ m_demultiplexer( *this )
   m_buffer           = NULL;
 #endif
 
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
   liDelta.QuadPart  = 0;
   liCount.QuadPart  = 0;
 #endif // _DEBUG
@@ -244,7 +244,7 @@ long CTsReader::Open(const char* pszFileName)
 
 long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long *dwReadBytes)
 {
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
   LARGE_INTEGER liFrequency;
   LARGE_INTEGER liCurrent;
   LARGE_INTEGER liLast;
@@ -253,7 +253,7 @@ long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned 
   if (m_fileReader)
   {
     long ret;
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
     // Save the performance counter frequency for later use.
     if (!QueryPerformanceFrequency(&liFrequency))
       XBMC->Log(LOG_ERROR, "QPF() failed with error %d\n", GetLastError());
@@ -265,7 +265,7 @@ long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned 
 
     ret = m_fileReader->Read(pbData, lDataLength, dwReadBytes);
 
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
     if (!QueryPerformanceCounter(&liCurrent))
       XBMC->Log(LOG_ERROR, "QPC() failed with error %d\n", GetLastError());
 
@@ -435,7 +435,7 @@ unsigned long CTsReader::SetFilePointer(int64_t llDistanceToMove, unsigned long 
   return m_fileReader->SetFilePointer(llDistanceToMove, dwMoveMethod);
 }
 
-#ifdef _DEBUG
+#if defined _DEBUG && defined TARGET_WINDOWS
 long long CTsReader::sigmaTime()
 {
   return liDelta.QuadPart;

@@ -404,8 +404,6 @@ int64_t FileReader::GetFilePointer()
 
 long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned long *dwReadBytes)
 {
-  int64_t zeropos = 0;
-
   // If the file has already been closed, don't continue
   if (IsFileInvalid())
   {
@@ -415,6 +413,7 @@ long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned
 
 #ifdef TARGET_WINDOWS
   long hr;
+  int64_t zeropos = 0;
 
   //Get File Position
   LARGE_INTEGER li;
