@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2011 Team XBMC
+ *      Copyright (C) 2005-2012 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -18,10 +18,21 @@
  *
  */
 
-#include "libPlatform/os-dependent.h"
+#if defined(TARGET_WINDOWS)
+#define NOMINMAX                      // don't define min() and max() to prevent a clash with std::min() and std::max
+#endif
+
+#include "platform/os.h"
 
 #if defined(TARGET_WINDOWS)
 #  include "windows/os_windows.h"
+#  if defined LIVE555
+   // Define needed for including headers from LIVE555 (see NetCommon.h)
+#    ifndef _WIN32
+#      define _WIN32
+#    endif
+#  endif
 #else
 #  include "posix/os_posix.h"
 #endif
+

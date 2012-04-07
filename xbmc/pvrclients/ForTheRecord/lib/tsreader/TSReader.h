@@ -30,7 +30,14 @@ public:
   long Open(const char* pszFileName);
   long Read(unsigned char* pbData, unsigned long lDataLength, unsigned long *dwReadBytes);
   void Close();
+  unsigned long SetFilePointer(int64_t llDistanceToMove, unsigned long dwMoveMethod);
+  int64_t GetFileSize();
+  int64_t GetFilePointer();
   void OnZap(void);
+#if defined(TARGET_WINDOWS)
+  long long sigmaTime();
+  long long  sigmaCount();
+#endif
 
 private:
   bool            m_bTimeShifting;
@@ -38,5 +45,9 @@ private:
   bool            m_bLiveTv;
   CStdString      m_fileName;
   FileReader*     m_fileReader;
+#if defined(TARGET_WINDOWS)
+  LARGE_INTEGER   liDelta; 
+  LARGE_INTEGER   liCount; 
+#endif
 };
 #endif //TSREADER

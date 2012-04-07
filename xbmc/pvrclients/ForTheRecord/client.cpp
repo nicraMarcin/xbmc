@@ -561,6 +561,16 @@ int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize)
     return g_client->ReadLiveStream(pBuffer, iBufferSize);
 }
 
+long long PositionLiveStream(void)
+{
+  return g_client->PositionLiveStream();
+}
+
+long long LengthLiveStream(void)
+{
+  return g_client->LengthLiveStream();
+}
+
 int GetCurrentClientChannel()
 {
   if (!g_client)
@@ -610,6 +620,21 @@ int ReadRecordedStream(unsigned char *pBuffer, unsigned int iBufferSize)
     return g_client->ReadRecordedStream(pBuffer, iBufferSize);
 }
 
+long long SeekRecordedStream(long long iPosition, int iWhence)
+{
+  return g_client->SeekRecordedStream(iPosition, iWhence); 
+}
+
+long long PositionRecordedStream(void)
+{ 
+  return g_client->PositionRecordedStream(); 
+}
+
+long long LengthRecordedStream(void)
+{
+  return g_client->LengthRecordedStream();
+}
+
 const char * GetLiveStreamURL(const PVR_CHANNEL &channel)
 {
   if (!g_client)
@@ -625,12 +650,6 @@ void DemuxAbort(void) {}
 void DemuxReset(void) {}
 void DemuxFlush(void) {}
 
-long long SeekRecordedStream(long long iPosition, int iWhence) { return -1; }
-long long PositionRecordedStream(void) { return -1; }
-long long LengthRecordedStream(void) { return -1; }
-
 long long SeekLiveStream(long long pos, int whence) { return -1; }
-long long PositionLiveStream(void) { return -1; }
-long long LengthLiveStream(void) { return -1 ; }
 
 } //end extern "C"

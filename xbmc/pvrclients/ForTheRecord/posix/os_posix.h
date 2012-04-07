@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2010 Team XBMC
+ *      Copyright (C) 2005-2012 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,14 +21,16 @@
 #ifndef PVRCLIENT_FORTHERECORD_OS_POSIX_H
 #define PVRCLIENT_FORTHERECORD_OS_POSIX_H
 
+// Success codes
+#define S_OK                             0L
+#define S_FALSE                          1L
+#define _FILE_OFFSET_BITS 64
+
 #include "PlatformInclude.h"
 #include "limits.h"
 #include "File.h"
 #include <sys/time.h>
 
-// Success codes
-//#define S_OK                             0L
-#define S_FALSE                          1L
 //
 // Error codes
 #define ERROR_FILENAME_EXCED_RANGE       206L
@@ -38,7 +40,14 @@
 
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 
-// Path separator
+#ifdef TARGET_LINUX
+#include <limits.h>
+#define MAX_PATH PATH_MAX
+#else
+#define MAX_PATH 256
+#endif
+
+/* Platform dependent path separator */
 #define PATH_SEPARATOR_CHAR '/'
 #define PATH_SEPARATOR_STRING "/"
 

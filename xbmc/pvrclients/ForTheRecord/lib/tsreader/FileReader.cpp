@@ -31,6 +31,7 @@
 #include "FileReader.h"
 #include "client.h" //for XBMC->Log
 #include "os-dependent.h"
+#include <algorithm> //std::min, std::max
 
 using namespace ADDON;
 
@@ -248,20 +249,13 @@ long FileReader::GetFileSize(int64_t *pStartPosition, int64_t *pLength)
 #if defined(TARGET_WINDOWS)
   //Do not get file size if static file or first time 
   if (m_bReadOnly || !m_fileSize) {
-    unsigned long dwSizeLow;
-    unsigned long dwSizeHigh;
-
-    dwSizeLow = ::GetFileSize(m_hFile, &dwSizeHigh);
-    DWORD dwErr = GetLastError();
-    if ((dwSizeLow == 0xFFFFFFFF) && (dwErr != NO_ERROR ))
-    {
-      XBMC->Log(LOG_ERROR, "%s: GetFileSize(File) failed. Error %d.", __FUNCTION__, dwErr);
-      return E_FAIL;
-    }
-
     LARGE_INTEGER li;
-    li.LowPart = dwSizeLow;
-    li.HighPart = dwSizeHigh;
+    if (::GetFileSizeEx(m_hFile, &li) == 0)
+    {
+      // Error
+      XBMC->Log(LOG_ERROR, "FileReader::GetFileSize() ::GetFileSizeEx failed");
+      return -1;
+    }
     m_fileSize = li.QuadPart;
   }
   *pLength = m_fileSize;
@@ -302,7 +296,7 @@ unsigned long FileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long
 {
   //XBMC->Log(LOG_DEBUG, "%s: distance %d method %d.", __FUNCTION__, llDistanceToMove, dwMoveMethod);
 #if defined(TARGET_WINDOWS)
-  LARGE_INTEGER li;
+  LARGE_INTEGER li, fileposition;
 
 	int64_t startPos = 0;
 	GetStartPosition(&startPos);
@@ -320,11 +314,24 @@ unsigned long FileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long
     else
     li.QuadPart = filePos;
 
-    return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, dwMoveMethod);
+    if (::SetFilePointerEx(m_hFile, li, &fileposition, dwMoveMethod) == 0)
+    {
+      // Error
+      XBMC->Log(LOG_ERROR, "FileReader::GetFilePointer() ::SetFilePointerEx failed");
+      return -1;
+    }
+    return (unsigned long) fileposition.QuadPart;
   }
   li.QuadPart = llDistanceToMove;
 
-  return ::SetFilePointer(m_hFile, li.LowPart, &li.HighPart, dwMoveMethod);
+  if (::SetFilePointerEx(m_hFile, li, &fileposition, dwMoveMethod) == 0)
+  {
+    // Error
+    XBMC->Log(LOG_ERROR, "FileReader::GetFilePointer() ::SetFilePointerEx failed");
+    return -1;
+  }
+  return (unsigned long) fileposition.QuadPart;
+
 #elif defined(TARGET_LINUX) || defined(TARGET_OSX)
   // Stupid but simple movement transform
   if (dwMoveMethod == FILE_BEGIN) dwMoveMethod = SEEK_SET;
@@ -370,9 +377,14 @@ unsigned long FileReader::SetFilePointer(int64_t llDistanceToMove, unsigned long
 int64_t FileReader::GetFilePointer()
 {
 #if defined(TARGET_WINDOWS)
-  LARGE_INTEGER li;
-  li.QuadPart = 0;
-  li.LowPart = ::SetFilePointer(m_hFile, 0, &li.HighPart, FILE_CURRENT);
+  LARGE_INTEGER li, seekoffset;
+  seekoffset.QuadPart = 0;
+  if (::SetFilePointerEx(m_hFile, seekoffset, &li, FILE_CURRENT) == 0)
+  {
+    // Error
+    XBMC->Log(LOG_ERROR, "FileReader::GetFilePointer() ::SetFilePointerEx failed");
+    return -1;
+  }
 
   int64_t start;
   int64_t length = 0;
@@ -425,21 +437,7 @@ long FileReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned
 //  BoostThread Boost;
 
 #ifdef TARGET_WINDOWS
-  long hr;
-
-  //Get File Position
-  LARGE_INTEGER li;
-  li.QuadPart = 0;
-  li.LowPart = ::SetFilePointer(m_hFile, 0, &li.HighPart, FILE_CURRENT);
-  DWORD dwErr = ::GetLastError();
-  if ((DWORD)li.LowPart == (DWORD)0xFFFFFFFF && dwErr)
-  {
-    XBMC->Log(LOG_ERROR, "FileReader::Read() seek failed, error %d.", dwErr);
-    return E_FAIL;
-  }
-  int64_t m_filecurrent = li.QuadPart;
-
-  hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL);//Read file data into buffer
+  long hr = ::ReadFile(m_hFile, (void*)pbData, (DWORD)lDataLength, dwReadBytes, NULL);//Read file data into buffer
 
   if (!hr)
   {
@@ -516,9 +514,9 @@ unsigned long FileReader::setFilePointer(int64_t llDistanceToMove, unsigned long
   GetFileSize(&fileStart, &fileLength);
   fileEnd = fileLength;
   if (dwMoveMethod == FILE_BEGIN)
-    return SetFilePointer((int64_t)min(fileEnd, llDistanceToMove), FILE_BEGIN);
+    return SetFilePointer((int64_t) std::min(fileEnd, llDistanceToMove), FILE_BEGIN);
   else
-    return SetFilePointer((int64_t)max((int64_t)-fileLength, llDistanceToMove), FILE_END);
+    return SetFilePointer((int64_t) std::max((int64_t)-fileLength, llDistanceToMove), FILE_END);
 }
 
 int64_t FileReader::getFilePointer()
@@ -543,5 +541,10 @@ int64_t FileReader::GetFileSize()
   GetFileSize(&pStartPosition, &pLength);
   //XBMC->Log(LOG_DEBUG, "%s: returns %d, GetLength(%d).", __FUNCTION__, pLength, m_hFile.GetLength());
   return pLength;
+}
+
+void FileReader::OnZap(void)
+{
+  SetFilePointer(0, FILE_END);
 }
 #endif //TSREADER

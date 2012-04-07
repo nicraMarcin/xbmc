@@ -16,12 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifdef TSREADER
-//#include "os-dependent.h"
-#include "libPlatform/os-dependent.h"
-#else
-#include "libPlatform/os-dependent.h"
-#endif 
 
 #include <vector>
 
@@ -33,8 +27,8 @@
 #include "guideprogram.h"
 
 #include "KeepAliveThread.h"
+
 #ifdef TSREADER
-//#include "lib/tsreader/TSReader.h"
 class CTsReader;
 #endif
 
@@ -89,6 +83,8 @@ public:
   bool OpenLiveStream(const PVR_CHANNEL &channel);
   void CloseLiveStream();
   int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize);
+  long long PositionLiveStream(void);
+  long long LengthLiveStream(void);
   int GetCurrentClientChannel();
   bool SwitchChannel(const PVR_CHANNEL &channel);
   PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS &signalStatus);
@@ -99,6 +95,8 @@ public:
   int ReadRecordedStream(unsigned char *pBuffer, unsigned int iBufferSize);
   long long SeekRecordedStream(long long iPosition, int iWhence = SEEK_SET);
   long long LengthRecordedStream(void);
+  long long PositionRecordedStream(void);
+
 
   /* Used for rtsp streaming */
   const char* GetLiveStreamURL(const PVR_CHANNEL &channel);
@@ -107,7 +105,7 @@ private:
   cChannel* FetchChannel(int channel_uid, bool LogError = true);
   cChannel* FetchChannel(std::string channelid, bool LogError = true);
   void Close();
-  bool FetchRecordingDetails(const Json::Value& data, cRecording& recording);
+  bool FetchRecordingDetails(std::string recordingid, cRecording& recording);
   bool FetchGuideProgramDetails(std::string Id, cGuideProgram& guideprogram);
   bool _OpenLiveStream(const PVR_CHANNEL &channel);
 

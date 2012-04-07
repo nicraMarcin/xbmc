@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2011 Team XBMC
+ *      Copyright (C) 2005-2012 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,8 +21,10 @@
 #ifdef TARGET_WINDOWS
 
 #define WIN32_LEAN_AND_MEAN           // Enable LEAN_AND_MEAN support
+#define NOMINMAX                      // don't define min() and max() to prevent a clash with std::min() and std::max
 #include <windows.h>
 
+/* Platform dependent path separator */
 #define PATH_SEPARATOR_CHAR '\\'
 #define PATH_SEPARATOR_STRING "\\"
 
