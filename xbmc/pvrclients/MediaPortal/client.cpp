@@ -291,7 +291,6 @@ void ADDON_ReadSettings(void)
 
   /* TSReader settings */
   /*********************/
-#ifdef TARGET_WINDOWS
   /* Read setting "directtsfileread" from settings.xml */
   if (!XBMC->GetSetting("directtsfileread", &g_bDirectTSFileRead))
   {
@@ -317,13 +316,6 @@ void ADDON_ReadSettings(void)
     g_bFastChannelSwitch = false;
   }
 
-#else //! TSREADER
-  /* "directtsfileread" is not yet supported on non-Windows targets */
-  XBMC->Log(LOG_INFO, "Setting 'directtsfileread' to 'false' for non-Windows targets");
-  g_bDirectTSFileRead = false;
-  g_szTimeshiftDir = DEFAULT_TIMESHIFT_DIR;
-#endif //TSREADER
-
   /* read setting "user" from settings.xml */
   if (!XBMC->GetSetting("smbusername", &buffer))
   {
@@ -334,7 +326,7 @@ void ADDON_ReadSettings(void)
     g_szSMBusername = buffer;
 
   /* read setting "pass" from settings.xml */
-  if (XBMC->GetSetting("smbpassword", &buffer))
+  if (!XBMC->GetSetting("smbpassword", &buffer))
   {
     XBMC->Log(LOG_ERROR, "Couldn't get 'smbpassword' setting, falling back to '%s' as default", DEFAULT_SMBPASSWORD);
     g_szSMBpassword = DEFAULT_SMBPASSWORD;

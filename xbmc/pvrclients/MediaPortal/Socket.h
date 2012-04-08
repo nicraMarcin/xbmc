@@ -59,7 +59,9 @@ namespace MPTV //Prevent name clash with Live555 Socket
   typedef int SOCKET;
   typedef sockaddr SOCKADDR;
   typedef sockaddr_in SOCKADDR_IN;
+  #ifndef INVALID_SOCKET
   #define INVALID_SOCKET (-1)
+  #endif
   #define SOCKET_ERROR (-1)
 #else
   #error Platform specific socket support is not yet available on this platform!

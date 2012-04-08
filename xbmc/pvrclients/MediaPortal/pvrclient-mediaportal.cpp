@@ -1353,7 +1353,6 @@ bool cPVRClientMediaPortal::OpenLiveStream(const PVR_CHANNEL &channelinfo)
         if (g_iTVServerXBMCBuild >=90 )
         { // Continue with the existing TsReader.
           XBMC->Log(LOG_INFO, "Re-using existing TsReader...");
-  #ifdef TARGET_WINDOWS
           if(g_bDirectTSFileRead)
           {
             // Timeshift buffer
@@ -1363,7 +1362,6 @@ bool cPVRClientMediaPortal::OpenLiveStream(const PVR_CHANNEL &channelinfo)
               return m_tsreader->OnZap(timeshiftfields[2].c_str(), -1, -1);
           }
           else
-  #endif //TARGET_WINDOWS
           {
             // RTSP url
             return true; //Fast forward seek (OnZap) does not for RTSP
@@ -1382,7 +1380,6 @@ bool cPVRClientMediaPortal::OpenLiveStream(const PVR_CHANNEL &channelinfo)
         XBMC->Log(LOG_INFO, "Creating a new TsReader...");
         m_tsreader = new CTsReader();
       }
-  #ifdef TARGET_WINDOWS
       // Reading directly from the timeshift buffer is only supported under Windows at the moment
       if (g_bDirectTSFileRead)
       { // Timeshift buffer
@@ -1398,7 +1395,6 @@ bool cPVRClientMediaPortal::OpenLiveStream(const PVR_CHANNEL &channelinfo)
         }
       }
       else
-  #endif //TARGET_WINDOWS
       {
         // use the RTSP url and live555
         if ( m_tsreader->Open(timeshiftfields[0].c_str()) != S_OK)

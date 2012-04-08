@@ -22,7 +22,6 @@
 #define PVRCLIENT_MEDIAPORTAL_OS_POSIX_H
 
 #include <stdint.h>
-#include "File.h"
 
 #define _FILE_OFFSET_BITS 64
 
@@ -46,6 +45,8 @@
 
 #define THREAD_PRIORITY_TIME_CRITICAL   THREAD_BASE_PRIORITY_LOWRT
 #define THREAD_PRIORITY_IDLE            THREAD_BASE_PRIORITY_IDLE
+
+#include "File.h"
 
 #ifdef TARGET_LINUX
 #include <limits.h>

@@ -123,11 +123,21 @@ std::string CTsReader::TranslatePath(const char*  pszFileName)
   }
   SMBPrefix += "@";
   size_t found = string::npos;
-  while ((found = CIFSname.find("\\")) != std::string::npos)
+
+  // Extract filename:
+  found = CIFSname.find_last_of("\\");
+
+  if (found != string::npos)
   {
-    CIFSname.replace(found, 1, "/");
+    CIFSname.erase(0, found + 1);
+    CIFSname.insert(0, m_basePath.c_str());
+    CIFSname.erase(0, 6); // Remove smb://
   }
-  CIFSname.erase(0,2);
+  //while ((found = CIFSname.find("\\")) != std::string::npos)
+  //{
+  //CIFSname.replace(found, 1, "/");
+  //}
+  //CIFSname.erase(0,2);
   CIFSname.insert(0, SMBPrefix.c_str());
 
   XBMC->Log(LOG_INFO, "CTsReader:TranslatePath %s -> %s", pszFileName, CIFSname.c_str());
@@ -259,7 +269,7 @@ long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned 
       XBMC->Log(LOG_ERROR, "QPF() failed with error %d\n", GetLastError());
 
     if (!QueryPerformanceCounter(&liCurrent))
-		  XBMC->Log(LOG_ERROR, "QPC() failed with error %d\n", GetLastError());
+      XBMC->Log(LOG_ERROR, "QPC() failed with error %d\n", GetLastError());
     liLast = liCurrent;
 #endif // _DEBUG
 
@@ -273,7 +283,7 @@ long CTsReader::Read(unsigned char* pbData, unsigned long lDataLength, unsigned 
     liDelta.QuadPart += (((liCurrent.QuadPart - liLast.QuadPart) * 1000000) / liFrequency.QuadPart);
     liCount.QuadPart++;
 #endif // _DEBUG
-	return ret;
+    return ret;
   }
 
   dwReadBytes = 0;
@@ -292,12 +302,10 @@ void CTsReader::Close()
       SAFE_DELETE(m_buffer);
 #endif
     }
-#ifdef TARGET_WINDOWS
     else
     {
       m_fileReader->CloseFile();
     }
-#endif //TARGET_WINDOWS
     SAFE_DELETE(m_fileReader);
     if (m_fileDuration)
       SAFE_DELETE(m_fileDuration);
