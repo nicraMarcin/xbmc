@@ -9,8 +9,8 @@
   </requires>
   <extension
     point="xbmc.pvrclient"
-    library_linux="XBMC_MPTV.pvr"
-    library_osx="XBMC_MPTV.pvr"
+    library_linux="XBMC_MPTV_linux.pvr"
+    library_osx="XBMC_MPTV_osx.pvr"
     library_wingl="XBMC_MPTV_win32.pvr"
     library_windx="XBMC_MPTV_win32.pvr"/>
   <extension point="xbmc.addon.metadata">

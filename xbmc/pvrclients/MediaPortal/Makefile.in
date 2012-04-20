@@ -8,7 +8,19 @@
 LIBS_LIVE555 = lib/live555/BasicUsageEnvironment/libBasicUsageEnvironment.a lib/live555/UsageEnvironment/libUsageEnvironment.a lib/live555/libgroupsock.a lib/live555/liveMedia/libliveMedia.a
 LIBS   = lib/tinyxml/tinyxml.a lib/tsreader/tsreader.a -ldl -lpthread
 LIBDIR = @abs_top_srcdir@/addons/pvr.team-mediaportal.tvserver
-LIB    = $(LIBDIR)/XBMC_MPTV.pvr
+
+ifeq ($(findstring osx,@ARCH@),osx)
+# until we get an additional extension point in addon.xml we can't create
+# versions for osx and ios with different names
+#ifeq ($(findstring x86-osx,@ARCH@),x86-osx)
+LIB    = $(LIBDIR)/XBMC_MPTV_osx.pvr
+#else
+#LIB    = $(LIBDIR)/XBMC_MPTV_ios.pvr
+#endif
+else
+LIB    = $(LIBDIR)/XBMC_MPTV_linux.pvr
+endif
+
 
 SRCS   = channels.cpp \
 	client.cpp \
