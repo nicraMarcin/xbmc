@@ -13,10 +13,8 @@ SRCS=ChannelInfo.cpp \
     RTSPClient.cpp \
     Section.cpp \
     SectionDecoder.cpp \
-    Thread.cpp \
     TSHeader.cpp \
-    TSReader.cpp \
-    WaitEvent.cpp
+    TSReader.cpp
 LIB=tsreader.a
 
 include ../../../Makefile.include

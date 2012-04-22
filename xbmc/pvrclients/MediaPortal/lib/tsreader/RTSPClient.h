@@ -19,7 +19,7 @@
 
 #ifdef LIVE555
 
-#include "lib/tsreader/Thread.h"
+#include "platform/threads/threads.h"
 #include "lib/tsreader/MemoryBuffer.h"
 
 #include "liveMedia.hh"
@@ -29,7 +29,7 @@
 
 #define RTSP_URL_BUFFERSIZE 2048
 
-class CRTSPClient: public CThread
+class CRTSPClient: public PLATFORM::CThread
 {
 public:
   CRTSPClient();
@@ -88,10 +88,12 @@ public:
   bool startPlayingStreams();
 
   // Thread
+private:
+  virtual void *Process(void);
   void StartBufferThread();
   void StopBufferThread();
-  virtual void Run();
   bool m_BufferThreadActive;
+
   long m_duration;
   double m_fStart;
   double m_fDuration;

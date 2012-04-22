@@ -143,7 +143,6 @@
     <ClCompile Include="..\..\lib\tsreader\RTSPClient.cpp" />
     <ClCompile Include="..\..\lib\tsreader\Section.cpp" />
     <ClCompile Include="..\..\lib\tsreader\SectionDecoder.cpp" />
-    <ClCompile Include="..\..\lib\tsreader\Thread.cpp" />
     <ClCompile Include="..\..\lib\tsreader\TSHeader.cpp" />
     <ClCompile Include="..\..\lib\tsreader\TSReader.cpp" />
     <ClCompile Include="..\..\pvrclient-mediaportal.cpp" />
@@ -180,7 +179,6 @@
     <ClInclude Include="..\..\lib\tsreader\RTSPClient.h" />
     <ClInclude Include="..\..\lib\tsreader\Section.h" />
     <ClInclude Include="..\..\lib\tsreader\SectionDecoder.h" />
-    <ClInclude Include="..\..\lib\tsreader\Thread.h" />
     <ClInclude Include="..\..\lib\tsreader\TSHeader.h" />
     <ClInclude Include="..\..\lib\tsreader\TSReader.h" />
     <ClInclude Include="..\..\NonCopyable.h" />
