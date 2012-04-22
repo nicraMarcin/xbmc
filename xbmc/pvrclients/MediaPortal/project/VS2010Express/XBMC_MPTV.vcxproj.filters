@@ -95,9 +95,6 @@
     <ClCompile Include="..\..\lib\tsreader\TSReader.cpp">
       <Filter>Source Files\tsreader</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\lib\tsreader\WaitEvent.cpp">
-      <Filter>Source Files\tsreader</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\lib\tsreader\DeMultiplexer.cpp">
       <Filter>Source Files\tsreader</Filter>
     </ClCompile>
@@ -206,9 +203,6 @@
       <Filter>Header Files\tsreader</Filter>
     </ClInclude>
     <ClInclude Include="..\..\lib\tsreader\TSReader.h">
-      <Filter>Header Files\tsreader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\lib\tsreader\WaitEvent.h">
       <Filter>Header Files\tsreader</Filter>
     </ClInclude>
     <ClInclude Include="..\..\windows\os_windows.h">

@@ -39,9 +39,9 @@ using namespace ADDON;
 
 CThread::CThread(const char* ThreadName)
 {
-  m_StartEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
-  m_StopEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
-  m_TermEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
+  m_StartEvent = new PLATFORM::CEvent();
+  m_StopEvent = new PLATFORM::CEvent();
+  m_TermEvent = new PLATFORM::CEvent();
 #ifdef TARGET_WINDOWS
   m_ThreadOpaque.handle = INVALID_HANDLE_VALUE;
 #else
@@ -60,31 +60,6 @@ CThread::CThread(const char* ThreadName)
     m_ThreadName = ThreadName;
 }
 
-/*
-CThread::CThread(IRunnable* pRunnable, const char* ThreadName)
-{
-  m_StartEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
-  m_StopEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
-  m_TermEvent = new CWaitEvent(NULL, TRUE, TRUE, NULL);
-#ifdef TARGET_WINDOWS
-  m_ThreadOpaque.handle = INVALID_HANDLE_VALUE;
-#else
-  m_ThreadOpaque.LwpId = 0;
-#endif
-  m_bThreadRunning=FALSE;
-
-  m_bStop = false;
-
-  m_bAutoDelete = false;
-  m_ThreadId = 0;
-
-  m_pRunnable=pRunnable;
-
-  if (ThreadName)
-    m_ThreadName = ThreadName;
-}
-*/
-
 CThread::~CThread()
 {
   WaitForThreadExit();
@@ -100,7 +75,6 @@ bool CThread::IsThreadRunning()
 
 void CThread::Process()
 {
-  m_TermEvent->ResetEvent();
   m_bThreadRunning = true;
   try
   {
@@ -116,7 +90,7 @@ void CThread::Process()
   {
     XBMC->Log(LOG_ERROR, "%s An unknown error happened in thread %s", __FUNCTION__, m_ThreadName.c_str());
   }
-  m_TermEvent->SetEvent();
+  m_TermEvent->Broadcast();
   m_bThreadRunning = false;
 }
 
@@ -140,7 +114,7 @@ THREADFUNC CThread::staticThread(void* data)
 
   XBMC->Log(LOG_NOTICE,"Thread %s start, auto delete: %s", name.c_str(), (pThread->IsAutoDelete() ? "true" : "false"));
   
-  pThread->m_StartEvent->SetEvent();
+  pThread->m_StartEvent->Broadcast();
   
   pThread->OnStartup();
   pThread->Process();

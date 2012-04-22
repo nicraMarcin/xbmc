@@ -35,10 +35,6 @@ long CThread::Create(bool bAutoDelete, unsigned stacksize)
   m_bAutoDelete = bAutoDelete;
   m_bStop = false;
 
-  m_StartEvent->ResetEvent();
-  m_StopEvent->ResetEvent();
-  m_TermEvent->ResetEvent();
-
   m_ThreadOpaque.handle = CreateThread(NULL,stacksize, (LPTHREAD_START_ROUTINE)&staticThread, this, 0, &m_ThreadId);
   if (m_ThreadOpaque.handle == INVALID_HANDLE_VALUE)
     return E_FAIL;
@@ -135,8 +131,12 @@ int CThread::GetPriority()
 bool CThread::WaitForThreadExit(unsigned long dwTimeoutMilliseconds)
 {
   bool bReturn = true;
+  m_bStop = true;
 
-  m_StopEvent->SetEvent();
+  if ( !m_bThreadRunning )
+    return bReturn;
+
+  m_StopEvent->Broadcast();
 
   if (!m_TermEvent->Wait(dwTimeoutMilliseconds))
   {
@@ -152,5 +152,5 @@ bool CThread::WaitForThreadExit(unsigned long dwTimeoutMilliseconds)
 
 bool CThread::ThreadIsStopping(unsigned long dwTimeoutMilliseconds)
 {
-  return m_StopEvent->Wait(dwTimeoutMilliseconds);
+  return m_bStop; //m_StopEvent-> ->Wait(dwTimeoutMilliseconds);
 }

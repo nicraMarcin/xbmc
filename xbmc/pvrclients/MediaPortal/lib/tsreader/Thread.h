@@ -34,7 +34,6 @@
 
 #include "platform/threads/mutex.h"
 #include "threads/ThreadImpl.h"
-#include "WaitEvent.h"
 
 class IRunnable
 {
@@ -64,7 +63,6 @@ class CThread: public IRunnable
 
     bool ThreadIsStopping(unsigned long dwTimeoutMilliseconds = 10);
     bool IsThreadRunning();
-    //tThreadId ThreadId(void);
     static bool IsCurrentThread(const ThreadIdentifier tid);
     static ThreadIdentifier GetCurrentThreadId();
  
@@ -73,9 +71,9 @@ class CThread: public IRunnable
     virtual void OnExit(){};
     virtual void OnException(){} // signal termination handler
     virtual void Process();
-    CWaitEvent* m_TermEvent;
-    CWaitEvent* m_StopEvent;
-    CWaitEvent* m_StartEvent;
+    PLATFORM::CEvent* m_TermEvent;
+    PLATFORM::CEvent* m_StopEvent;
+    PLATFORM::CEvent* m_StartEvent;
     volatile bool m_bStop;
 
   private:
@@ -85,10 +83,9 @@ class CThread: public IRunnable
     IRunnable* m_pRunnable;
     static THREADFUNC staticThread(void *data);
     void TermHandler();
-    //THREADHANDLE m_ThreadHandle;
     std::string m_ThreadName;
     void SetThreadInfo();
-	  ThreadIdentifier m_ThreadId;
-	  bool m_bAutoDelete;
+    ThreadIdentifier m_ThreadId;
+    bool m_bAutoDelete;
 };
 #endif //LIVE555

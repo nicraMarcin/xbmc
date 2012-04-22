@@ -146,7 +146,6 @@
     <ClCompile Include="..\..\lib\tsreader\Thread.cpp" />
     <ClCompile Include="..\..\lib\tsreader\TSHeader.cpp" />
     <ClCompile Include="..\..\lib\tsreader\TSReader.cpp" />
-    <ClCompile Include="..\..\lib\tsreader\WaitEvent.cpp" />
     <ClCompile Include="..\..\pvrclient-mediaportal.cpp" />
     <ClCompile Include="..\..\recordings.cpp" />
     <ClCompile Include="..\..\Socket.cpp" />
@@ -184,7 +183,6 @@
     <ClInclude Include="..\..\lib\tsreader\Thread.h" />
     <ClInclude Include="..\..\lib\tsreader\TSHeader.h" />
     <ClInclude Include="..\..\lib\tsreader\TSReader.h" />
-    <ClInclude Include="..\..\lib\tsreader\WaitEvent.h" />
     <ClInclude Include="..\..\NonCopyable.h" />
     <ClInclude Include="..\..\os-dependent.h" />
     <ClInclude Include="..\..\pvrclient-mediaportal.h" />
